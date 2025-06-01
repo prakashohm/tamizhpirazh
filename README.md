@@ -1,3 +1,60 @@
+# தமிழ்ப் பிறழ் (Tamil Word Scramble)
+
+A fun and interactive word scramble game for Tamil words. Test your Tamil vocabulary and unscramble the letters to form the correct word.
+
+## Features
+
+- 🎮 Interactive tile-based interface
+- 🔤 Tamil word scrambling with proper character handling
+- ✨ Beautiful animations and visual feedback
+- 📱 Mobile-friendly responsive design
+- 🎯 Score tracking
+- 🔄 New word generation
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v14 or higher)
+- npm or yarn
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone [your-repo-url]
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start the development server:
+```bash
+npm start
+```
+
+The app will open in your default browser at `http://localhost:3000`.
+
+## How to Play
+
+1. A scrambled Tamil word will be displayed as clickable tiles
+2. Click the tiles in the correct order to form the original word
+3. Click "சரிபார்" (Check) to verify your answer
+4. Get points for each correct answer
+5. Click "புதிய சொல்" (New Word) to get a different word
+
+## Technologies Used
+
+- React.js
+- CSS3 with modern features
+- grapheme-splitter for proper Tamil character handling
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
