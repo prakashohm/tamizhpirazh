@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import GraphemeSplitter from 'grapheme-splitter';
+import StartPage from './components/StartPage';
 import './App.css';
 
 const splitter = new GraphemeSplitter();
@@ -13,18 +14,32 @@ function App() {
     const [message, setMessage] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isCorrect, setIsCorrect] = useState(false);
+    const [gameStarted, setGameStarted] = useState(false);
+    const [gameLevel, setGameLevel] = useState(null);
 
     useEffect(() => {
         // Fetch the .txt file when app loads
-        fetch('/tamil_words.txt')
-            .then((res) => res.text())
+        fetch(`${process.env.PUBLIC_URL}/tamil_words.txt`)
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error('Failed to load words file');
+                }
+                return res.text();
+            })
             .then((text) => {
+                if (!text || text.trim().length === 0) {
+                    throw new Error('Words file is empty');
+                }
                 const words = text
                     .split('\n')
                     .map((line) => line.trim())
                     .filter((line) => line.length > 0);
+                
+                if (words.length === 0) {
+                    throw new Error('No valid words found in file');
+                }
+                
                 setWordList(words);
-                getNewWord(words);
                 setIsLoading(false);
             })
             .catch(error => {
@@ -34,12 +49,62 @@ function App() {
             });
     }, []);
 
+    const getFilteredWords = () => {
+        if (!wordList.length) return [];
+                
+        return wordList.filter(word => {
+            const graphemes = splitter.splitGraphemes(word);
+            const graphemeCount = graphemes.length;
+            
+            let isIncluded = false;
+            if (gameLevel === 'basic' || gameLevel === null) {
+                isIncluded = graphemeCount <= 5;
+            } else {
+                isIncluded = graphemeCount > 5;
+            }
+            return isIncluded;
+        });
+    };
+
+    const getNewWord = () => {
+        setIsCorrect(false);
+        const filteredWords = getFilteredWords();
+        
+        if (!filteredWords.length) {
+            console.error('No words available for this level');
+            setMessage('இந்த நிலைக்கான சொற்கள் கிடைக்கவில்லை');
+            return;
+        }
+        const word = filteredWords[Math.floor(Math.random() * filteredWords.length)];
+        const graphemes = splitter.splitGraphemes(word);
+        setOriginalWord(word);
+        const shuffledWord = shuffleWord(word);
+        setShuffledTiles(shuffledWord);
+        setSelectedTiles([]);
+        setMessage('');
+    };
+
+    const handleStartGame = (level) => {
+        setGameLevel(level);
+        setGameStarted(true);
+        setScore(0);
+    };
+
+    // Add useEffect to handle game level changes
+    useEffect(() => {
+        if (gameStarted && gameLevel !== null) {
+            getNewWord();
+        }
+    }, [gameLevel, gameStarted]);
+
     const shuffleWord = (word) => {
+        if (!word) {
+            console.error('No word provided to shuffle');
+            return [];
+        }
+
         // Ensure proper splitting of Tamil characters
         const graphemes = splitter.splitGraphemes(word);
-        
-        // Debug log to check proper splitting
-        console.log('Original graphemes:', graphemes);
         
         // If word is too short, just return a simple shuffle
         if (graphemes.length <= 2) {
@@ -67,26 +132,12 @@ function App() {
             
             attempts++;
             if (attempts >= MAX_ATTEMPTS) {
-                // If we can't get a good shuffle after max attempts, just return the last attempt
                 console.log('Max shuffle attempts reached');
                 break;
             }
         } while (isSameWord || hasTooManySamePositions);
 
-        // Debug log to check shuffled result
-        console.log('Shuffled graphemes:', shuffled);
         return shuffled;
-    };
-
-    const getNewWord = (list = wordList) => {
-        setIsCorrect(false);
-        const word = list[Math.floor(Math.random() * list.length)];
-        console.log('Selected word:', word); // Debug log
-        setOriginalWord(word);
-        const shuffledWord = shuffleWord(word);
-        setShuffledTiles(shuffledWord);
-        setSelectedTiles([]);
-        setMessage('');
     };
 
     const selectTile = (letter, index) => {
@@ -108,11 +159,13 @@ function App() {
         const guess = tiles.map((t) => t.letter).join('');
         if (guess === originalWord) {
             setIsCorrect(true);
-            setMessage(`✨ அருமை! சரியான பதில்! (${originalWord})`);
-            setScore(score + 1);
+            setMessage(`✨ அருமை! சரியான பதில்! (${originalWord}) +10 புள்ளிகள்`);
+            setScore(score + 10);
             setTimeout(() => getNewWord(), 1500);
         } else {
-            setMessage('❌ தவறு, மீண்டும் முயற்சிக்கவும்!');
+            setMessage('❌ தவறு, மீண்டும் முயற்சிக்கவும்! -3 புள்ளிகள்');
+            // Never let score go below 0
+            setScore(Math.max(0, score - 3));
             // Shake animation will be triggered by CSS
             const guessRow = document.querySelector('.guess-row');
             guessRow.classList.add('shake');
@@ -130,12 +183,21 @@ function App() {
         );
     }
 
+    if (!gameStarted) {
+        return <StartPage onStartGame={handleStartGame} />;
+    }
+
     return (
         <div className="app">
-            <h1>🎮 சொற்ப் பிறழ் 🎮</h1>
-            <div className="score">
-                <span>மதிப்பெண்கள்:</span> 
-                <span className="score-number">{score}</span>
+            <h1>🎮 தமிழ்ப் பிறழ் 🎮</h1>
+            <div className="game-info">
+                <div className="level-indicator">
+                    {gameLevel === 'basic' ? 'அடிப்படை நிலை' : 'மேம்பட்ட நிலை'}
+                </div>
+                <div className="score">
+                    <span>மதிப்பெண்கள்:</span> 
+                    <span className="score-number">{score}</span>
+                </div>
             </div>
 
             <div className={`tile-row ${isCorrect ? 'correct' : ''}`}>
@@ -177,6 +239,16 @@ function App() {
                     onClick={() => getNewWord()}
                 >
                     புதிய சொல்
+                </button>
+                <button 
+                    className="tertiary" 
+                    onClick={() => {
+                        setGameStarted(false);
+                        setGameLevel(null);
+                        setScore(0);
+                    }}
+                >
+                    நிலையைத் தேர்வு செய்
                 </button>
             </div>
             

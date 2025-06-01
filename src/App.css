@@ -9,7 +9,7 @@
 body, html {
   margin: 0;
   padding: 0;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Noto Sans Tamil', 'Poppins', sans-serif;
   background: linear-gradient(135deg, #f6f9fc 0%, #edf2f7 100%);
 }
 
@@ -261,4 +261,49 @@ button:disabled {
     padding: 8px 16px;
     font-size: 1rem;
   }
+}
+
+.game-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 600px;
+    margin-bottom: 20px;
+    gap: 20px;
+}
+
+.level-indicator {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(66, 153, 225, 0.2);
+}
+
+.game-info .score {
+    margin: 0;
+}
+
+button.tertiary {
+    background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+    color: white;
+}
+
+button.tertiary:hover {
+    box-shadow: 0 6px 12px rgba(74, 85, 104, 0.3);
+}
+
+@media (max-width: 480px) {
+    .game-info {
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .level-indicator {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+    }
 }
