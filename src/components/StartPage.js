@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './StartPage.css';
 
 function StartPage({ onStartGame }) {
+    const [showRules, setShowRules] = useState(true);
     return (
         <div className="start-page">
             <h1>🎮 தமிழ்ப் பிறழ் 🎮</h1>
-            <div className="rules-container">
+            <button 
+                className="collapsible-toggle" 
+                onClick={() => setShowRules(!showRules)}
+            >
+                {showRules ? 'விதிகளை மறை' : 'விதிகளை காட்டு'}
+            </button>
+            <div className={`rules-container collapsible-content ${showRules ? 'open' : 'closed'}`}>
                 <h2>விளையாட்டு விதிகள்</h2>
                 
                 <div className="rule-item">
