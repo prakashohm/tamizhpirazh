@@ -140,6 +140,16 @@ button.secondary {
   box-shadow: 0 4px 6px rgba(74, 85, 104, 0.2);
 }
 
+button.hint {
+  background: linear-gradient(135deg, #ecc94b 0%, #d69e2e 100%);
+  box-shadow: 0 4px 6px rgba(214, 158, 46, 0.25);
+  color: #1a202c;
+}
+
+button.hint:hover {
+  box-shadow: 0 6px 12px rgba(214, 158, 46, 0.35);
+}
+
 button:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(66, 153, 225, 0.3);

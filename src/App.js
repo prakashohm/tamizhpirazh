@@ -16,6 +16,7 @@ function App() {
     const [isCorrect, setIsCorrect] = useState(false);
     const [gameStarted, setGameStarted] = useState(false);
     const [gameLevel, setGameLevel] = useState(null);
+    const [hintsUsed, setHintsUsed] = useState(0);
 
     useEffect(() => {
         // Fetch the .txt file when app loads
@@ -124,12 +125,14 @@ function App() {
         setShuffledTiles(shuffledWord);
         setSelectedTiles([]);
         setMessage('');
+        setHintsUsed(0);
     }, [getFilteredWords, shuffleWord]);
 
     const handleStartGame = (level) => {
         setGameLevel(level);
         setGameStarted(true);
         setScore(0);
+        setHintsUsed(0);
     };
 
     // Add useEffect to handle game level changes
@@ -170,6 +173,37 @@ function App() {
             guessRow.classList.add('shake');
             setTimeout(() => guessRow.classList.remove('shake'), 500);
         }
+    };
+
+    const useHint = () => {
+        if (gameLevel !== 'advanced') {
+            setMessage('குறிப்புகள் மேம்பட்ட நிலைக்கு மட்டுமே கிடைக்கும்');
+            return;
+        }
+        if (hintsUsed >= 2) {
+            setMessage('இரண்டு குறிப்புகள் ஏற்கெனவே பயன்படுத்தப்பட்டுள்ளன');
+            return;
+        }
+        if (!originalWord) return;
+
+        const targetGraphemes = splitter.splitGraphemes(originalWord);
+        const nextPos = selectedTiles.length;
+        if (nextPos >= targetGraphemes.length) return;
+
+        const needed = targetGraphemes[nextPos];
+        const usedIdx = new Set(selectedTiles.map(t => t.index));
+        const tileIdx = shuffledTiles.findIndex((ch, idx) => ch === needed && !usedIdx.has(idx));
+
+        if (tileIdx === -1) {
+            setMessage('குறிப்பு கிடைக்கவில்லை');
+            return;
+        }
+
+        // Select the correct next tile and update hint/score
+        selectTile(needed, tileIdx);
+        setHintsUsed(hintsUsed + 1);
+        setScore(Math.max(0, score - 5));
+        setMessage(`💡 குறிப்பு பயன்படுத்தப்பட்டது: நிலை ${nextPos + 1} வெளிப்படுத்தப்பட்டது (-5)`);
     };
 
     if (isLoading) {
@@ -232,6 +266,15 @@ function App() {
             </div>
 
             <div className="button-group">
+                {gameLevel === 'advanced' && (
+                    <button 
+                        className="hint" 
+                        onClick={useHint}
+                        disabled={hintsUsed >= 2 || selectedTiles.length >= splitter.splitGraphemes(originalWord).length}
+                    >
+                        குறிப்பு ({2 - hintsUsed} மீதம்)
+                    </button>
+                )}
                 <button 
                     onClick={() => submitGuess()}
                     disabled={selectedTiles.length === 0}
