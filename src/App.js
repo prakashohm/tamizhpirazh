@@ -188,7 +188,12 @@ function App() {
 
     return (
         <div className="app">
-            <h1>🎮 தமிழ்ப் பிறழ் 🎮</h1>
+            <h1>
+                <span className="title-row">
+                    <img src={`${process.env.PUBLIC_URL}/tamil.png`} alt="Tamil Logo" className="title-logo" />
+                    தமிழ்ப்பிறழ்
+                </span>
+            </h1>
             <div className="game-info">
                 <div className="level-indicator">
                     {gameLevel === 'basic' ? 'அடிப்படை நிலை' : 'மேம்பட்ட நிலை'}

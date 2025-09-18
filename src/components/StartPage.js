@@ -5,7 +5,12 @@ function StartPage({ onStartGame }) {
     const [showRules, setShowRules] = useState(true);
     return (
         <div className="start-page">
-            <h1>🎮 தமிழ்ப் பிறழ் 🎮</h1>
+            <h1>
+                <span className="title-row">
+                    <img src={`${process.env.PUBLIC_URL}/tamil.png`} alt="Tamil Logo" className="title-logo" />
+                    தமிழ்ப்பிறழ்
+                </span>
+            </h1>
             <button 
                 className="collapsible-toggle" 
                 onClick={() => setShowRules(!showRules)}
@@ -13,47 +18,30 @@ function StartPage({ onStartGame }) {
                 {showRules ? 'விதிகளை மறை' : 'விதிகளை காட்டு'}
             </button>
             <div className={`rules-container collapsible-content ${showRules ? 'open' : 'closed'}`}>
-                <h2>விளையாட்டு விதிகள்</h2>
-                
-                <div className="rule-item">
-                    <span className="rule-number">1</span>
-                    <p>கலைக்கப்பட்ட தமிழ் சொற்கள் காட்டப்படும்</p>
-                </div>
-
-                <div className="rule-item">
-                    <span className="rule-number">2</span>
-                    <p>எழுத்துகளை சரியான வரிசையில் அமைக்க வேண்டும்</p>
-                </div>
-
-                <div className="rule-item">
-                    <span className="rule-number">3</span>
-                    <p>எழுத்துகளை தேர்வு செய்ய அவற்றை கிளிக் செய்யவும்</p>
-                </div>
-
-                <div className="rule-item">
-                    <span className="rule-number">4</span>
-                    <p>தவறான எழுத்தை நீக்க, அதை மீண்டும் கிளிக் செய்யவும்</p>
-                </div>
-
-                <div className="rule-item">
-                    <span className="rule-number">5</span>
-                    <p>சரியான சொல்லுக்கு ஒரு மதிப்பெண் கிடைக்கும்</p>
-                </div>
-
-                <div className="levels-container">
-                    <h3>நிலைகள்:</h3>
-                    <div className="level-description">
-                        <h4>அடிப்படை நிலை:</h4>
-                        <p>5 அல்லது அதற்கும் குறைவான எழுத்துகள் கொண்ட சொற்கள்</p>
-                    </div>
-                    <div className="level-description">
-                        <h4>மேம்பட்ட நிலை:</h4>
-                        <p>5-க்கும் மேற்பட்ட எழுத்துகள் கொண்ட சொற்கள்</p>
-                    </div>
-                </div>
+            <h2>விளையாட்டு விதிகள்</h2>
+            <ul className="space-y-2 list-disc list-inside text-gray-800">
+                <li>கலைக்கப்பட்ட தமிழ் சொற்கள் காட்டப்படும்</li>
+                <li>எழுத்துகளை சரியான வரிசையில் அமைக்க வேண்டும்</li>
+                <li>எழுத்துகளை தேர்வு செய்ய அவற்றை கிளிக் செய்யவும்</li>
+                <li>தவறான எழுத்தை நீக்க, அதை மீண்டும் கிளிக் செய்யவும்</li>
+                <li>சரியான சொல்லுக்கு ஒரு மதிப்பெண் கிடைக்கும்</li>
+            </ul>
+            
+            <h3>நிலைகள்</h3>
+            <ul class="space-y-3 list-disc list-inside text-gray-800">
+            <li>
+            <strong>அடிப்படை நிலை</strong>
+            <br></br>5 அல்லது அதற்கும் குறைவான எழுத்துகள் கொண்ட சொற்கள்
+            </li>
+            <li>
+            <strong>மேம்பட்ட நிலை</strong>
+            <br></br>
+            5-க்கும் மேற்பட்ட எழுத்துகள் கொண்ட சொற்கள்
+            </li>
+            </ul>
 
                 <div className="example">
-                    <h3>எடுத்துக்காட்டு:</h3>
+                    <h3>எடுத்துக்காட்டு</h3>
                     <div className="example-tiles">
                         <span className="tile">மி</span>
                         <span className="tile">த</span>
