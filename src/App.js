@@ -255,8 +255,9 @@ function App() {
                     நிலையைத் தேர்வு செய்
                 </button>
             </div>
-            
-            <p className={`message ${isCorrect ? 'correct' : ''}`}>{message}</p>
+            {message && message.trim() !== '' && (
+                <p className={`message ${isCorrect ? 'correct' : ''}`}>{message}</p>
+            )}
         </div>
     );
 }
