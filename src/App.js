@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import GraphemeSplitter from 'grapheme-splitter';
 import StartPage from './components/StartPage';
 import './App.css';
@@ -49,7 +49,7 @@ function App() {
             });
     }, []);
 
-    const getFilteredWords = () => {
+    const getFilteredWords = useCallback(() => {
         if (!wordList.length) return [];
                 
         return wordList.filter(word => {
@@ -64,40 +64,9 @@ function App() {
             }
             return isIncluded;
         });
-    };
+    }, [wordList, gameLevel]);
 
-    const getNewWord = () => {
-        setIsCorrect(false);
-        const filteredWords = getFilteredWords();
-        
-        if (!filteredWords.length) {
-            console.error('No words available for this level');
-            setMessage('இந்த நிலைக்கான சொற்கள் கிடைக்கவில்லை');
-            return;
-        }
-        const word = filteredWords[Math.floor(Math.random() * filteredWords.length)];
-        const graphemes = splitter.splitGraphemes(word);
-        setOriginalWord(word);
-        const shuffledWord = shuffleWord(word);
-        setShuffledTiles(shuffledWord);
-        setSelectedTiles([]);
-        setMessage('');
-    };
-
-    const handleStartGame = (level) => {
-        setGameLevel(level);
-        setGameStarted(true);
-        setScore(0);
-    };
-
-    // Add useEffect to handle game level changes
-    useEffect(() => {
-        if (gameStarted && gameLevel !== null) {
-            getNewWord();
-        }
-    }, [gameLevel, gameStarted]);
-
-    const shuffleWord = (word) => {
+    const shuffleWord = useCallback((word) => {
         if (!word) {
             console.error('No word provided to shuffle');
             return [];
@@ -138,7 +107,37 @@ function App() {
         } while (isSameWord || hasTooManySamePositions);
 
         return shuffled;
+    }, []);
+
+    const getNewWord = useCallback(() => {
+        setIsCorrect(false);
+        const filteredWords = getFilteredWords();
+        
+        if (!filteredWords.length) {
+            console.error('No words available for this level');
+            setMessage('இந்த நிலைக்கான சொற்கள் கிடைக்கவில்லை');
+            return;
+        }
+        const word = filteredWords[Math.floor(Math.random() * filteredWords.length)];
+        setOriginalWord(word);
+        const shuffledWord = shuffleWord(word);
+        setShuffledTiles(shuffledWord);
+        setSelectedTiles([]);
+        setMessage('');
+    }, [getFilteredWords, shuffleWord]);
+
+    const handleStartGame = (level) => {
+        setGameLevel(level);
+        setGameStarted(true);
+        setScore(0);
     };
+
+    // Add useEffect to handle game level changes
+    useEffect(() => {
+        if (gameStarted && gameLevel !== null) {
+            getNewWord();
+        }
+    }, [gameLevel, gameStarted, getNewWord]);
 
     const selectTile = (letter, index) => {
         if (selectedTiles.find((t) => t.index === index)) return;
