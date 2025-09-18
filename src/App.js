@@ -9,7 +9,7 @@ function App() {
     const [wordList, setWordList] = useState([]);
     const [originalWord, setOriginalWord] = useState('');
     const [shuffledTiles, setShuffledTiles] = useState([]);
-    const [selectedTiles, setSelectedTiles] = useState([]);
+    const [selectedTiles, setSelectedTiles] = useState([]); // used as slot array (null or {letter,index})
     const [score, setScore] = useState(0);
     const [message, setMessage] = useState('');
     const [isLoading, setIsLoading] = useState(true);
@@ -123,7 +123,9 @@ function App() {
         setOriginalWord(word);
         const shuffledWord = shuffleWord(word);
         setShuffledTiles(shuffledWord);
-        setSelectedTiles([]);
+        // initialize slots to the length of the target word
+        const slots = Array(splitter.splitGraphemes(word).length).fill(null);
+        setSelectedTiles(slots);
         setMessage('');
         setHintsUsed(0);
     }, [getFilteredWords, shuffleWord]);
@@ -142,22 +144,34 @@ function App() {
         }
     }, [gameLevel, gameStarted, getNewWord]);
 
-    const selectTile = (letter, index) => {
-        if (selectedTiles.find((t) => t.index === index)) return;
-        const newSelectedTiles = [...selectedTiles, { letter, index }];
-        setSelectedTiles(newSelectedTiles);
-        
-        // Auto-submit if all letters are selected
-        if (newSelectedTiles.length === splitter.splitGraphemes(originalWord).length) {
-            submitGuess(newSelectedTiles);
+    const selectTile = (letter, index, targetSlotIndex = null) => {
+        // prevent using same tile twice
+        if (selectedTiles.some((t) => t && t.index === index)) return;
+
+        const newSlots = [...selectedTiles];
+        let slotIndex = targetSlotIndex;
+        if (slotIndex === null) {
+            slotIndex = newSlots.findIndex((s) => s === null);
+        }
+        if (slotIndex === -1) return; // no space
+
+        newSlots[slotIndex] = { letter, index };
+        setSelectedTiles(newSlots);
+
+        // Auto-submit if all filled
+        if (newSlots.every((s) => s !== null)) {
+            submitGuess(newSlots);
         }
     };
 
-    const removeTile = (index) => {
-        setSelectedTiles(selectedTiles.filter((_, i) => i !== index));
+    const removeTile = (slotIndex) => {
+        const newSlots = [...selectedTiles];
+        newSlots[slotIndex] = null;
+        setSelectedTiles(newSlots);
     };
 
     const submitGuess = (tiles = selectedTiles) => {
+        if (!tiles.length || tiles.some((t) => t === null)) return;
         const guess = tiles.map((t) => t.letter).join('');
         if (guess === originalWord) {
             setIsCorrect(true);
@@ -187,11 +201,15 @@ function App() {
         if (!originalWord) return;
 
         const targetGraphemes = splitter.splitGraphemes(originalWord);
-        const nextPos = selectedTiles.length;
-        if (nextPos >= targetGraphemes.length) return;
+        const emptySlots = selectedTiles
+            .map((s, i) => (s === null ? i : null))
+            .filter((i) => i !== null);
+        if (emptySlots.length === 0) return;
+        // pick a random empty slot to reveal
+        const slotIndexToFill = emptySlots[Math.floor(Math.random() * emptySlots.length)];
 
-        const needed = targetGraphemes[nextPos];
-        const usedIdx = new Set(selectedTiles.map(t => t.index));
+        const needed = targetGraphemes[slotIndexToFill];
+        const usedIdx = new Set(selectedTiles.filter((s) => s !== null).map((t) => t.index));
         const tileIdx = shuffledTiles.findIndex((ch, idx) => ch === needed && !usedIdx.has(idx));
 
         if (tileIdx === -1) {
@@ -200,10 +218,10 @@ function App() {
         }
 
         // Select the correct next tile and update hint/score
-        selectTile(needed, tileIdx);
+        selectTile(needed, tileIdx, slotIndexToFill);
         setHintsUsed(hintsUsed + 1);
         setScore(Math.max(0, score - 5));
-        setMessage(`💡 குறிப்பு பயன்படுத்தப்பட்டது: நிலை ${nextPos + 1} வெளிப்படுத்தப்பட்டது (-5)`);
+        setMessage(`💡 குறிப்பு பயன்படுத்தப்பட்டது: இடம் ${slotIndexToFill + 1} வெளிப்படுத்தப்பட்டது (-5)`);
     };
 
     if (isLoading) {
@@ -238,29 +256,75 @@ function App() {
                 </div>
             </div>
 
-            <div className={`tile-row ${isCorrect ? 'correct' : ''}`}>
-                {shuffledTiles.map((letter, idx) => (
-                    <div
-                        key={idx}
-                        className={`tile ${
-                            selectedTiles.find((t) => t.index === idx) ? 'disabled' : ''
-                        }`}
-                        onClick={() => selectTile(letter, idx)}
-                    >
-                        {letter}
-                    </div>
-                ))}
+            <div 
+                className={`tile-row ${isCorrect ? 'correct' : ''}`}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                    const data = e.dataTransfer.getData('text/plain');
+                    if (data.startsWith('slot:')) {
+                        const from = parseInt(data.split(':')[1], 10);
+                        // dropping to bank removes from slot
+                        removeTile(from);
+                    }
+                }}
+            >
+                {shuffledTiles.map((letter, idx) => {
+                    const used = selectedTiles.some((t) => t && t.index === idx);
+                    return (
+                        <div
+                            key={idx}
+                            className={`tile ${used ? 'disabled' : ''}`}
+                            draggable={!used}
+                            onDragStart={(e) => {
+                                e.dataTransfer.setData('text/plain', `bank:${idx}`);
+                            }}
+                            onClick={() => selectTile(letter, idx)}
+                        >
+                            {letter}
+                        </div>
+                    );
+                })}
             </div>
 
             <h3>உங்கள் பதில்:</h3>
             <div className="tile-row guess-row">
-                {selectedTiles.map((tile, i) => (
+                {selectedTiles.map((slot, i) => (
                     <div
                         key={i}
-                        className="tile selected"
-                        onClick={() => removeTile(i)}
+                        className={`slot ${slot ? 'filled' : 'empty'}`}
+                        onClick={() => slot && removeTile(i)}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => {
+                            const data = e.dataTransfer.getData('text/plain');
+                            if (!data) return;
+                            if (data.startsWith('bank:')) {
+                                const tileIdx = parseInt(data.split(':')[1], 10);
+                                const letter = shuffledTiles[tileIdx];
+                                selectTile(letter, tileIdx, i);
+                            } else if (data.startsWith('slot:')) {
+                                const from = parseInt(data.split(':')[1], 10);
+                                if (from === i) return;
+                                const newSlots = [...selectedTiles];
+                                const tmp = newSlots[i];
+                                newSlots[i] = newSlots[from];
+                                newSlots[from] = tmp;
+                                setSelectedTiles(newSlots);
+                            }
+                        }}
                     >
-                        {tile.letter}
+                        {slot ? (
+                            <div
+                                className="tile selected"
+                                draggable
+                                onDragStart={(e) => {
+                                    e.dataTransfer.setData('text/plain', `slot:${i}`);
+                                }}
+                            >
+                                {slot.letter}
+                            </div>
+                        ) : (
+                            <div className="placeholder"> </div>
+                        )}
                     </div>
                 ))}
             </div>
@@ -270,7 +334,10 @@ function App() {
                     <button 
                         className="hint" 
                         onClick={useHint}
-                        disabled={hintsUsed >= 2 || selectedTiles.length >= splitter.splitGraphemes(originalWord).length}
+                        disabled={
+                            hintsUsed >= 2 ||
+                            (selectedTiles && selectedTiles.length > 0 && selectedTiles.every((s) => s !== null))
+                        }
                     >
                         குறிப்பு ({2 - hintsUsed} மீதம்)
                     </button>
